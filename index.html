@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мої уроки</title>
+<meta name="theme-color" content="#2457D6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#F4F6FA;--card:#fff;--line:#E1E6EE;--ink:#12202F;--mute:#6B7686;--accent:#2457D6;--remote:#E9EDF5;--chip:#CBD3E0;--amber:#FFD27A;--green:#178045}
+@media (prefers-color-scheme:dark){:root{--bg:#0E141C;--card:#17202B;--line:#263344;--ink:#E8EEF6;--mute:#93A0B2;--accent:#5B86F0;--remote:#1F2A38;--chip:#33445A;--amber:#FFD27A;--green:#178045}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:system-ui,Roboto,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
+#app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto}
+main{flex:1;overflow-y:auto;padding:calc(24px + env(safe-area-inset-top)) 20px 16px}
+h1{margin:2px 0 0;font-size:28px;font-weight:700}
+.sub{font-size:13px;color:var(--mute)}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.pill{min-height:44px;display:flex;align-items:center;border:1px solid var(--chip);background:var(--card);border-radius:22px;padding:0 16px;font-size:14px;font-weight:500}
+.days{display:flex;gap:4px;background:var(--card);border-radius:16px;padding:4px;margin-bottom:12px}
+.days button{flex:1;min-height:48px;border:0;border-radius:12px;background:transparent;color:var(--ink);font:500 14px inherit;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.days button small{font-size:12px;color:var(--mute)}
+.days button[aria-pressed=true]{background:var(--accent);color:#fff}
+.days button[aria-pressed=true] small{color:#fff;opacity:.85}
+.days button.today:not([aria-pressed=true]) b{color:var(--accent)}
+.list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.r{display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+.r.rem{background:var(--remote)}
+.r.past{opacity:.5}
+.r.now{background:var(--green);border-color:var(--green);color:#fff}
+.t{width:50px;display:flex;flex-direction:column;font-size:12px;color:var(--mute)}
+.t b{font-size:17px;color:var(--ink)}
+.now .t,.now .t b,.now .s span{color:#fff}
+.s{flex:1;display:flex;flex-direction:column;gap:1px}
+.s b{font-size:18px}
+.s span{font-size:13px;color:var(--mute)}
+.s em{font-style:normal;font-size:12px;font-weight:700;color:var(--accent)}
+.now .s em{color:var(--amber)}
+.k{font-size:11px;font-weight:700;padding:4px 8px;border-radius:8px;background:var(--chip);color:var(--ink)}
+.k.o{background:var(--card);border:1px solid var(--chip)}
+.now .k{background:rgba(255,255,255,.2);color:#fff;border:0}
+.gap{text-align:center;font-size:12px;color:var(--mute);padding:2px 0}
+.note{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--mute);margin-top:10px}
+.g{display:grid;grid-template-columns:22px repeat(5,1fr);gap:5px;margin-top:10px}
+.g .h{font-weight:700;font-size:13px;text-align:center;color:var(--mute);padding:6px 0;border:0;background:none;font-family:inherit;min-height:44px}
+.g .h.today{color:var(--accent)}
+.n{font-size:13px;color:var(--mute);display:flex;align-items:center}
+.c{background:var(--card);border:1px solid var(--line);border-radius:10px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:12px;font-weight:700;line-height:1.25;padding:2px}
+.c i{font-style:normal;font-weight:400;font-size:11px;color:var(--mute)}
+.c.rem{background:var(--remote)}
+.c.cur{background:var(--green);border-color:var(--green);color:#fff}
+.c.cur i{color:#fff}
+.c.e{background:transparent;border-style:dashed}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mute);margin-top:12px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
+nav{display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;min-height:64px;border:0;background:none;color:var(--mute);font:500 12px inherit;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+nav button[aria-selected=true]{color:var(--accent)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="view"></main>
+  <nav role="tablist">
+    <button role="tab" id="tab-day" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Сьогодні</button>
+    <button role="tab" id="tab-week" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>Тиждень</button>
+  </nav>
+</div>
+<script>
+/* ===== ДАНІ: тут редагується розклад. L(№ уроку, клас, кабінет, дистанційно?) ===== */
+const L=(n,c,r,d)=>({n,c,r:r||'',d:!!d});
+const SCHEDULE=[
+ /* Пн */[L(5,'8-Г ПіФ',0,1),L(6,'8-А ПіФ',0,1),L(8,'7-Д','46а'),L(9,'7-Є','2'),L(10,'7-В','43'),L(11,'8-М','42')],
+ /* Вт */[L(5,'8-М',0,1),L(6,'8-Є ПіФ',0,1),L(8,'7-Ж',0,1),L(9,'8-В','32'),L(10,'8-Б','24'),L(11,'7-Б','37'),L(12,'8-А','33')],
+ /* Ср */[L(5,'8-В ПіФ',0,1),L(6,'8-М ПіФ',0,1),L(7,'8-В',0,1),L(8,'7-Ж',0,1),L(9,'7-Б','37'),L(10,'7-Г','31'),L(11,'8-Є','34')],
+ /* Чт */[L(5,'8-Б ПіФ',0,1),L(6,'8-Є',0,1),L(7,'8-А',0,1),L(9,'7-Г','31'),L(10,'7-А','36'),L(11,'7-В','43')],
+ /* Пт */[L(5,'8-Д ПіФ',0,1),L(6,'8-Б',0,1),L(8,'7-Є','2'),L(10,'7-А','36'),L(11,'7-Д','46а')]
+];
+const BELLS={1:['08:00','08:40'],2:['08:55','09:35'],3:['09:50','10:30'],4:['10:35','11:15'],5:['11:20','12:00'],6:['12:15','12:55'],7:['13:00','13:40'],8:['13:50','14:30'],9:['14:45','15:25'],10:['15:40','16:20'],11:['16:25','17:05'],12:['17:10','17:50']};
+/* ================================================================ */
+const SHORT=['Пн','Вт','Ср','Чт','Пт'],FULL=['Понеділок','Вівторок','Середа','Четвер','Пʼятниця'];
+const $=s=>document.querySelector(s),view=$('#view');
+const mins=t=>{const [h,m]=t.split(':').map(Number);return h*60+m};
+const dur=m=>m>=60?`${Math.floor(m/60)} год${m%60?` ${m%60} хв`:''}`:`${m} хв`;
+const plural=n=>n===1?'урок':(n>1&&n<5?'уроки':'уроків');
+let tab='day',sel=0,ti=-1;
+function now(){const d=new Date(),w=d.getDay();ti=w>=1&&w<=5?w-1:-1;return {d,cur:d.getHours()*60+d.getMinutes()}}
+function dayDates(d){const w=d.getDay()||7,mon=new Date(d);mon.setDate(d.getDate()-w+1);return SHORT.map((_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x.getDate()})}
+function dayView(){
+  const {d,cur}=now(),dates=dayDates(d),ls=SCHEDULE[sel],rem=ls.filter(x=>x.d).length;
+  const head=sel===ti?d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'}):FULL[sel];
+  let h=`<header><div><div class="sub">${head.charAt(0).toUpperCase()+head.slice(1)}</div><h1>Мої уроки</h1></div><div class="pill">Фізика</div></header>`;
+  h+=`<div class="days">`+SHORT.map((s,i)=>`<button data-d="${i}" aria-pressed="${i===sel}" class="${i===ti?'today':''}"><b>${s}</b><small>${dates[i]}</small></button>`).join('')+`</div>`;
+  h+=`<div class="sub">${ls.length} ${plural(ls.length)} · ${rem} дистанційно · ${ls.length-rem} очно</div>`;
+  if(ti===-1)h+=`<div class="note">Сьогодні вихідний. Показано розклад на тиждень.</div>`;
+  h+=`<div class="list">`;
+  let nextDone=false,allPast=sel===ti;
+  ls.forEach((x,i)=>{
+    const [a,b]=BELLS[x.n],s=mins(a),e=mins(b);
+    if(i>0){const pe=mins(BELLS[ls[i-1].n][1]);if(s-pe>=30)h+=`<div class="gap">Вікно · ${dur(s-pe)}</div>`}
+    let cls='r'+(x.d?' rem':''),tag='';
+    if(sel===ti){
+      if(cur>=e)cls+=' past';
+      else{allPast=false;
+        if(cur>=s){cls='r now';tag=`<em>Зараз · ще ${dur(e-cur)}</em>`}
+        else if(!nextDone){nextDone=true;tag=`<em>Далі · через ${dur(s-cur)}</em>`}}
+    }
+    h+=`<div class="${cls}"><div class="t"><b>${x.n}</b><span>${a}</span><span>${b}</span></div><div class="s">${tag}<b>${x.c}</b><span>${x.d?'дистанційно':'каб. '+x.r}</span></div><span class="k ${x.d?'':'o'}">${x.d?'дист.':'очно'}</span></div>`;
+  });
+  h+=`</div>`;
+  if(sel===ti&&allPast)h+=`<div class="note">На сьогодні уроки закінчились.</div>`;
+  view.innerHTML=h;
+}
+function weekView(){
+  const {d,cur}=now(),dates=dayDates(d);
+  let h=`<header><div><div class="sub">Уроки ${Math.min(...SCHEDULE.flat().map(x=>x.n))}–${Math.max(...SCHEDULE.flat().map(x=>x.n))}</div><h1>Тиждень</h1></div><div class="pill">Фізика</div></header><div class="g"><span></span>`;
+  h+=SHORT.map((s,i)=>`<button class="h ${i===ti?'today':''}" data-d="${i}">${s}<br><small>${dates[i]}</small></button>`).join('');
+  const all=SCHEDULE.flat().map(x=>x.n),lo=Math.min(...all),hi=Math.max(...all);
+  for(let n=lo;n<=hi;n++){
+    h+=`<div class="n">${n}</div>`;
+    SCHEDULE.forEach((day,di)=>{const x=day.find(y=>y.n===n);
+      const on=x&&di===ti&&cur>=mins(BELLS[n][0])&&cur<mins(BELLS[n][1])?' cur':'';
+      h+=!x?`<div class="c e"></div>`:x.d?`<div class="c rem${on}">${x.c}<i>дист.</i></div>`:`<div class="c${on}">${x.c}<i>${x.r}</i></div>`});
+  }
+  h+=`</div><div class="legend"><span><b style="background:var(--remote)"></b>дистанційно</span><span><b style="background:var(--card);border:1px solid var(--chip)"></b>очно, мал. — кабінет</span><span><b style="background:var(--green)"></b>зараз</span></div>`;
+  view.innerHTML=h;
+}
+function render(){tab==='day'?dayView():weekView();$('#tab-day').setAttribute('aria-selected',tab==='day');$('#tab-week').setAttribute('aria-selected',tab==='week')}
+view.addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(b){sel=+b.dataset.d;tab='day';render();scrollTo(0,0)}});
+$('#tab-day').onclick=()=>{tab='day';render()};
+$('#tab-week').onclick=()=>{tab='week';render()};
+now();sel=ti>=0?ti:0;render();
+setInterval(()=>{const y=ti;now();if(y!==ti&&ti>=0)sel=ti;render()},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)render()});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
