@@ -15,6 +15,9 @@
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark;--bg:#0E141C;--card:#17202B;--line:#263344;--ink:#E8EEF6;--mute:#93A0B2;--accent:#5B86F0;--remote:#1F2A38;--chip:#33445A;--amber:#FFD27A;--green:#178045}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0E141C;--card:#17202B;--line:#263344;--ink:#E8EEF6;--mute:#93A0B2;--accent:#5B86F0;--remote:#1F2A38;--chip:#33445A;--amber:#FFD27A;--green:#178045}}
+:root{--p7:#B85F0A;--p8:#6D4AE0}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--p7:#F0A04B;--p8:#A78BFA}}
+:root[data-theme=dark]{--p7:#F0A04B;--p8:#A78BFA}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{font-family:system-ui,Roboto,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);-webkit-tap-highlight-color:transparent}
@@ -72,6 +75,14 @@ button.pill{font-family:inherit;color:var(--ink)}
 .bar{height:6px;border-radius:3px;background:rgba(255,255,255,.3);margin-top:8px;overflow:hidden}
 .bar i{display:block;height:100%;background:#fff;border-radius:3px}
 .r[data-e]{cursor:pointer}
+.r.p7{box-shadow:inset 4px 0 0 var(--p7)}.r.p8{box-shadow:inset 4px 0 0 var(--p8)}
+.r.p7 .s b{color:var(--p7)}.r.p8 .s b{color:var(--p8)}
+.r.now{box-shadow:none}.r.now .s b{color:#fff}
+.next.p7{border-left-color:var(--p7)}.next.p8{border-left-color:var(--p8)}
+.c b{font-size:17px;font-weight:700}
+.c.p7{box-shadow:inset 0 -3px 0 var(--p7)}.c.p8{box-shadow:inset 0 -3px 0 var(--p8)}
+.c.p7 b{color:var(--p7)}.c.p8 b{color:var(--p8)}
+.c.cur{box-shadow:none}.c.cur b{color:#fff}
 .add{width:100%;min-height:48px;margin-top:10px;border:1px dashed var(--chip);border-radius:14px;background:transparent;color:var(--accent);font:600 15px inherit;font-family:inherit}
 .lnk{display:block;margin:18px auto 4px;min-height:44px;border:0;background:none;color:var(--mute);font:13px inherit;font-family:inherit;text-decoration:underline}
 dialog{margin:auto auto 0;width:100%;max-width:520px;border:0;border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));background:var(--card);color:var(--ink)}
@@ -140,6 +151,7 @@ function applyTheme(){const p=themePref(),r=document.documentElement;
   document.querySelector('meta[name=theme-color]').content=dark?'#0E141C':'#2457D6'}
 const themeBox=()=>{const p=themePref();return `<div class="theme"><span>Тема</span><div class="seg" role="group" aria-label="Тема">${[['auto','Авто'],['light','Світла'],['dark','Темна']].map(([k,t])=>`<button type="button" data-theme-set="${k}" aria-pressed="${p===k}">${t}</button>`).join('')}</div></div>`};
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
+const par=c=>{const n=parseInt(c);return n===7?' p7':n===8?' p8':''};
 const roomTxt=x=>x.d?'дистанційно':(x.r?'каб. '+x.r:'очно');
 let tab='day',sel=0,ti=-1;
 function now(){const d=new Date(),w=d.getDay();ti=w>=1&&w<=5?w-1:-1;return {d,cur:d.getHours()*60+d.getMinutes()}}
@@ -155,7 +167,7 @@ function dayView(){
   const head=sel===ti?d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'}):FULL[sel];
   let h=`<header><div><div class="sub">${head.charAt(0).toUpperCase()+head.slice(1)}</div><h1>Мої уроки</h1></div>${sel!==ti&&ti>=0?'<button class="pill go" data-today>Сьогодні</button>':'<div class="pill">Фізика</div>'}</header>`;
   const nx=nextLesson(cur);
-  if(nx)h+=`<div class="next"><div><span>Наступний урок</span><b>${nx.x.c}</b><span>${roomTxt(nx.x)}</span></div><div class="when">${nx.today?'через '+dur(mins(BELLS[nx.x.n][0])-cur):FULL[nx.di]+', '+BELLS[nx.x.n][0]}</div></div>`;
+  if(nx)h+=`<div class="next${par(nx.x.c)}"><div><span>Наступний урок</span><b>${nx.x.c}</b><span>${roomTxt(nx.x)}</span></div><div class="when">${nx.today?'через '+dur(mins(BELLS[nx.x.n][0])-cur):FULL[nx.di]+', '+BELLS[nx.x.n][0]}</div></div>`;
   h+=`<div class="days">`+SHORT.map((s,i)=>`<button data-d="${i}" aria-pressed="${i===sel}" class="${i===ti?'today':''}"><b>${s}</b><small>${dates[i]}</small></button>`).join('')+`</div>`;
   h+=`<div class="sub">${ls.length} ${plural(ls.length)} · ${rem} дистанційно · ${ls.length-rem} очно</div>`;
   if(ti===-1)h+=`<div class="note">Сьогодні вихідний. Показано розклад на тиждень.</div>`;
@@ -171,6 +183,7 @@ function dayView(){
         if(cur>=s){cls='r now';tag=`<em>Зараз · ще ${dur(e-cur)}</em>`;bar=`<div class="bar" aria-hidden="true"><i style="width:${Math.round((cur-s)/(e-s)*100)}%"></i></div>`}
         else if(!nextDone){nextDone=true;tag=`<em>Далі · через ${dur(s-cur)}</em>`}}
     }
+    cls+=par(x.c);
     h+=`<div class="${cls}" role="button" tabindex="0" data-e="${i}"><div class="t"><b>${x.n}</b><span>${a}</span><span>${b}</span></div><div class="s">${tag}<b>${x.c}</b><span>${roomTxt(x)}</span>${bar}</div><span class="k ${x.d?'':'o'}">${x.d?'дист.':'очно'}</span></div>`;
   });
   h+=`</div>`;
@@ -188,9 +201,11 @@ function weekView(){
     h+=`<div class="n">${n}</div>`;
     SCHEDULE.forEach((day,di)=>{const x=day.find(y=>y.n===n);
       const on=x&&di===ti&&cur>=mins(BELLS[n][0])&&cur<mins(BELLS[n][1])?' cur':'';
-      h+=!x?`<div class="c e"></div>`:x.d?`<div class="c rem${on}">${x.c}<i>дист.</i></div>`:`<div class="c${on}">${x.c}<i>${x.r}</i></div>`});
+      if(!x){h+=`<div class="c e"></div>`;return}
+      const cl=x.c.split(' ')[0],rest=x.c.slice(cl.length).trim();
+      h+=`<div class="c${x.d?' rem':''}${on}${par(x.c)}" aria-label="${x.c}, ${roomTxt(x)}"><b>${cl}</b>${rest?`<i>${rest}</i>`:''}</div>`});
   }
-  h+=`</div><div class="legend"><span><b style="background:var(--remote)"></b>дистанційно</span><span><b style="background:var(--card);border:1px solid var(--chip)"></b>очно, мал. — кабінет</span><span><b style="background:var(--green)"></b>зараз</span></div>`+themeBox();
+  h+=`</div><div class="legend"><span><b style="background:var(--remote)"></b>дистанційно</span><span><b style="background:var(--card);border:1px solid var(--chip)"></b>очно</span><span><b style="background:var(--p7)"></b>7 клас</span><span><b style="background:var(--p8)"></b>8 клас</span><span><b style="background:var(--green)"></b>зараз</span></div>`+themeBox();
   view.innerHTML=h;
 }
 function render(){tab==='day'?dayView():weekView();$('#tab-day').setAttribute('aria-selected',tab==='day');$('#tab-week').setAttribute('aria-selected',tab==='week')}
