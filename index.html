@@ -83,6 +83,8 @@ button.pill{font-family:inherit;color:var(--ink)}
 .c b{font-size:17px;font-weight:700}
 .c.p7{box-shadow:inset 0 -3px 0 var(--p7)}.c.p8{box-shadow:inset 0 -3px 0 var(--p8)}
 .c.p7 b{color:var(--p7)}.c.p8 b{color:var(--p8)}
+.c.mix{background:linear-gradient(135deg,var(--card) 50%,var(--rem2) 50%)}.c.mix.cur{background:var(--green)}
+.k.m{background:var(--remote);border:1px solid var(--chip)}
 .c.cur{box-shadow:none}.c.cur b{color:#fff}
 .add{width:100%;min-height:48px;margin-top:10px;border:1px dashed var(--chip);border-radius:14px;background:transparent;color:var(--accent);font:600 15px inherit;font-family:inherit}
 .lnk{display:block;margin:18px auto 4px;min-height:44px;border:0;background:none;color:var(--mute);font:13px inherit;font-family:inherit;text-decoration:underline}
@@ -117,7 +119,7 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   <h2 id="dlg-title"></h2>
   <label>Номер уроку<select id="f-n"></select></label>
   <label>Клас<input id="f-c" maxlength="20" autocomplete="off" placeholder="наприклад, 8-Б"></label>
-  <div class="seg" role="group" aria-label="Формат"><button type="button" data-m="0">Очно</button><button type="button" data-m="1">Дистанційно</button></div>
+  <div class="seg" role="group" aria-label="Формат"><button type="button" data-m="0">Очно</button><button type="button" data-m="1">Дистанційно</button><button type="button" data-m="2">Змішано</button></div>
   <label id="room-l">Кабінет<input id="f-r" maxlength="8" autocomplete="off" placeholder="наприклад, 46а"></label>
   <div id="err" role="alert"></div>
   <div class="acts"><button type="button" id="b-del">Видалити</button><button type="button" id="b-cancel">Скасувати</button><button type="submit" id="b-save">Зберегти</button></div>
@@ -153,7 +155,8 @@ function applyTheme(){const p=themePref(),r=document.documentElement;
 const themeBox=()=>{const p=themePref();return `<div class="theme"><span>Тема</span><div class="seg" role="group" aria-label="Тема">${[['auto','Авто'],['light','Світла'],['dark','Темна']].map(([k,t])=>`<button type="button" data-theme-set="${k}" aria-pressed="${p===k}">${t}</button>`).join('')}</div></div>`};
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
 const par=c=>{const n=parseInt(c);return n===7?' p7':n===8?' p8':''};
-const roomTxt=x=>x.d?'дистанційно':(x.r?'каб. '+x.r:'очно');
+const mode=x=>x.m!=null?x.m:(x.d?1:0);
+const roomTxt=x=>{const m=mode(x);return m===1?'дистанційно':m===2?(x.r?'каб. '+x.r+' · змішано':'змішано'):(x.r?'каб. '+x.r:'очно')};
 let tab='day',sel=0,ti=-1;
 function now(){const d=new Date(),w=d.getDay();ti=w>=1&&w<=5?w-1:-1;return {d,cur:d.getHours()*60+d.getMinutes()}}
 function weekMonday(d){const w=d.getDay(),m=new Date(d);m.setDate(d.getDate()+(w===0?1:w===6?2:1-w));return m}
@@ -168,13 +171,13 @@ function nextLesson(cur){
   return null;
 }
 function dayView(){
-  const {d,cur}=now(),dates=dayDates(d),ls=SCHEDULE[sel],rem=ls.filter(x=>x.d).length;
+  const {d,cur}=now(),dates=dayDates(d),ls=SCHEDULE[sel],rem=ls.filter(x=>mode(x)===1).length,mix=ls.filter(x=>mode(x)===2).length;
   const head=sel===ti?d.toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'}):FULL[sel];
   let h=`<header><div><div class="sub">${head.charAt(0).toUpperCase()+head.slice(1)}</div><h1>Мої уроки</h1></div>${sel!==ti&&ti>=0?'<button class="pill go" data-today>Сьогодні</button>':'<div class="pill">Фізика</div>'}</header>`;
   const nx=nextLesson(cur);
   if(nx)h+=`<div class="next${par(nx.x.c)}"><div><span>Наступний урок</span><b>${nx.x.c}</b><span>${roomTxt(nx.x)}</span></div><div class="when">${nx.today?'через '+dur(mins(BELLS[nx.x.n][0])-cur):FULL[nx.di]+', '+BELLS[nx.x.n][0]}</div></div>`;
   h+=`<div class="days">`+SHORT.map((s,i)=>`<button data-d="${i}" aria-pressed="${i===sel}" class="${i===ti?'today':''}"><b>${s}</b><small>${dates[i]}</small></button>`).join('')+`</div>`;
-  h+=`<div class="sub">${ls.length} ${plural(ls.length)} · ${rem} дистанційно · ${ls.length-rem} очно</div>`;
+  h+=`<div class="sub">${ls.length} ${plural(ls.length)} · ${rem} дистанційно · ${ls.length-rem-mix} очно${mix?` · ${mix} змішано`:''}</div>`;
   if(ti===-1)h+=`<div class="note">Сьогодні вихідний. Показано розклад на тиждень.</div>`;
   h+=`<div class="list">`;
   let nextDone=false,allPast=sel===ti;
@@ -189,7 +192,7 @@ function dayView(){
         else if(!nextDone){nextDone=true;tag=`<em>Далі · через ${dur(s-cur)}</em>`}}
     }
     cls+=par(x.c);
-    h+=`<div class="${cls}" role="button" tabindex="0" data-e="${i}"><div class="t"><b>${x.n}</b><span>${a}</span><span>${b}</span></div><div class="s">${tag}<b>${x.c}</b><span>${roomTxt(x)}</span>${bar}</div><span class="k ${x.d?'':'o'}">${x.d?'дист.':'очно'}</span></div>`;
+    h+=`<div class="${cls}" role="button" tabindex="0" data-e="${i}"><div class="t"><b>${x.n}</b><span>${a}</span><span>${b}</span></div><div class="s">${tag}<b>${x.c}</b><span>${roomTxt(x)}</span>${bar}</div><span class="k ${mode(x)===1?'':mode(x)===2?'m':'o'}">${mode(x)===1?'дист.':mode(x)===2?'зміш.':'очно'}</span></div>`;
   });
   h+=`</div>`;
   if(!ls.length)h+=`<div class="note">Уроків немає. Додайте перший.</div>`;
@@ -208,21 +211,21 @@ function weekView(){
       const on=x&&di===ti&&cur>=mins(BELLS[n][0])&&cur<mins(BELLS[n][1])?' cur':'';
       if(!x){h+=`<div class="c e"></div>`;return}
       const cl=x.c.split(' ')[0],rest=x.c.slice(cl.length).trim();
-      h+=`<div class="c${x.d?' rem':''}${on}${par(x.c)}" aria-label="${x.c}, ${roomTxt(x)}">${x.d?'<svg class="ic" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>':''}<b>${cl}</b>${rest?`<i>${rest}</i>`:''}</div>`});
+      h+=`<div class="c${x.d?' rem':mode(x)===2?' mix':''}${on}${par(x.c)}" aria-label="${x.c}, ${roomTxt(x)}">${mode(x)?'<svg class="ic" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>':''}<b>${cl}</b>${rest?`<i>${rest}</i>`:''}</div>`});
   }
-  h+=`</div><div class="legend"><span><b style="background:var(--rem2)"></b>дистанційно</span><span><b style="background:var(--card);border:1px solid var(--chip)"></b>очно</span><span><b style="background:var(--p7)"></b>7 клас</span><span><b style="background:var(--p8)"></b>8 клас</span><span><b style="background:var(--green)"></b>зараз</span></div>`+themeBox();
+  h+=`</div><div class="legend"><span><b style="background:var(--rem2)"></b>дистанційно</span><span><b style="background:var(--card);border:1px solid var(--chip)"></b>очно</span><span><b style="background:linear-gradient(135deg,var(--card) 50%,var(--rem2) 50%);border:1px solid var(--chip)"></b>змішано</span><span><b style="background:var(--p7)"></b>7 клас</span><span><b style="background:var(--p8)"></b>8 клас</span><span><b style="background:var(--green)"></b>зараз</span></div>`+themeBox();
   view.innerHTML=h;
 }
 function render(){tab==='day'?dayView():weekView();$('#tab-day').setAttribute('aria-selected',tab==='day');$('#tab-week').setAttribute('aria-selected',tab==='week')}
-const dlg=$('#dlg');let ed={idx:-1,remote:0};
-function setMode(m){ed.remote=m;dlg.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.m===m));$('#room-l').style.display=m?'none':'block'}
+const dlg=$('#dlg');let ed={idx:-1,mode:0};
+function setMode(m){ed.mode=m;dlg.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.m===m));$('#room-l').style.display=m===1?'none':'block'}
 function openEdit(idx){
   const day=SCHEDULE[sel],x=idx>=0?day[idx]:null;ed.idx=idx;
   $('#dlg-title').textContent=(x?'Редагувати урок':'Новий урок')+' · '+SHORT[sel];
   const used=day.map(y=>y.n),free=[5,6,7,8,9,10,11,12,1,2,3,4].find(n=>!used.includes(n))||5;
   $('#f-n').innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1} · ${BELLS[i+1][0]}–${BELLS[i+1][1]}</option>`).join('');
   $('#f-n').value=x?x.n:free;$('#f-c').value=x?x.c:'';$('#f-r').value=x?x.r:'';
-  setMode(x&&x.d?1:0);$('#err').textContent='';$('#b-del').style.display=x?'block':'none';
+  setMode(x?mode(x):0);$('#err').textContent='';$('#b-del').style.display=x?'block':'none';
   dlg.showModal();
 }
 function saveEdit(ev){
@@ -230,7 +233,7 @@ function saveEdit(ev){
   const n=+$('#f-n').value,c=$('#f-c').value.trim(),r=$('#f-r').value.trim(),day=SCHEDULE[sel];
   if(!c){$('#err').textContent='Вкажіть клас.';return}
   if(day.some((y,i)=>y.n===n&&i!==ed.idx)){$('#err').textContent=`Урок ${n} у цей день уже є.`;return}
-  const item={n,c,r:ed.remote?'':r,d:!!ed.remote};
+  const item={n,c,r:ed.mode===1?'':r,d:ed.mode===1,m:ed.mode};
   if(ed.idx>=0)day[ed.idx]=item;else day.push(item);
   day.sort((a,b)=>a.n-b.n);persist();dlg.close();render();
 }
