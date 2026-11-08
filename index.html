@@ -15,7 +15,7 @@
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark;--bg:#0E141C;--card:#17202B;--line:#263344;--ink:#E8EEF6;--mute:#93A0B2;--accent:#5B86F0;--remote:#1F2A38;--chip:#33445A;--amber:#FFD27A;--green:#178045}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0E141C;--card:#17202B;--line:#263344;--ink:#E8EEF6;--mute:#93A0B2;--accent:#5B86F0;--remote:#1F2A38;--chip:#33445A;--amber:#FFD27A;--green:#178045}}
-:root{--p7:#B85F0A;--p8:#6D4AE0;--rem2:#D3DCEC}
+:root{--p7:#B85F0A;--p8:#6D4AE0;--rem2:#D3DCEC;--red:#C0392B}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--p7:#F0A04B;--p8:#A78BFA;--rem2:#2C3C54}}
 :root[data-theme=dark]{--p7:#F0A04B;--p8:#A78BFA;--rem2:#2C3C54}
 *{box-sizing:border-box}
@@ -85,7 +85,10 @@ button.pill{font-family:inherit;color:var(--ink)}
 .c.p7 b{color:var(--p7)}.c.p8 b{color:var(--p8)}
 .c.mix{background:linear-gradient(135deg,var(--card) 50%,var(--rem2) 50%)}.c.mix.cur{background:var(--green)}
 .k.m{background:var(--remote);border:1px solid var(--chip)}
-.c.cur{box-shadow:none}.c.cur b{color:#fff}
+.c.cur{box-shadow:none}
+@keyframes warnpulse{0%,100%{background-color:var(--green);border-color:var(--green)}50%{background-color:var(--red);border-color:var(--red)}}
+.r.now.warn,.c.cur.warn{animation:warnpulse var(--pulse,4s) ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.r.now.warn,.c.cur.warn{animation:none;background-color:var(--red);border-color:var(--red)}}.c.cur b{color:#fff}
 .add{width:100%;min-height:48px;margin-top:10px;border:1px dashed var(--chip);border-radius:14px;background:transparent;color:var(--accent);font:600 15px inherit;font-family:inherit}
 .lnk{display:block;margin:18px auto 4px;min-height:44px;border:0;background:none;color:var(--mute);font:13px inherit;font-family:inherit;text-decoration:underline}
 dialog{margin:auto auto 0;width:100%;max-width:520px;border:0;border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));background:var(--card);color:var(--ink)}
@@ -155,6 +158,9 @@ function applyTheme(){const p=themePref(),r=document.documentElement;
 const themeBox=()=>{const p=themePref();return `<div class="theme"><span>Тема</span><div class="seg" role="group" aria-label="Тема">${[['auto','Авто'],['light','Світла'],['dark','Темна']].map(([k,t])=>`<button type="button" data-theme-set="${k}" aria-pressed="${p===k}">${t}</button>`).join('')}</div></div>`};
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change',applyTheme);
 const par=c=>{const n=parseInt(c);return n===7?' p7':n===8?' p8':''};
+const PULSE=4,WARN_MIN=5;
+document.documentElement.style.setProperty('--pulse',PULSE+'s');
+const pulseStyle=()=>` style="animation-delay:-${((Date.now()/1000)%PULSE).toFixed(2)}s"`;
 const mode=x=>x.m!=null?x.m:(x.d?1:0);
 const roomTxt=x=>{const m=mode(x);return m===1?'дистанційно':m===2?(x.r?'каб. '+x.r+' · змішано':'змішано'):(x.r?'каб. '+x.r:'очно')};
 let tab='day',sel=0,ti=-1;
@@ -184,15 +190,15 @@ function dayView(){
   ls.forEach((x,i)=>{
     const [a,b]=BELLS[x.n],s=mins(a),e=mins(b);
     if(i>0){const pe=mins(BELLS[ls[i-1].n][1]);if(s-pe>=30)h+=`<div class="gap">Вікно · ${dur(s-pe)}</div>`}
-    let cls='r'+(x.d?' rem':''),tag='',bar='';
+    let cls='r'+(x.d?' rem':''),tag='',bar='',st='';
     if(sel===ti){
       if(cur>=e)cls+=' past';
       else{allPast=false;
-        if(cur>=s){cls='r now';tag=`<em>Зараз · ще ${dur(e-cur)}</em>`;bar=`<div class="bar" aria-hidden="true"><i style="width:${Math.round((cur-s)/(e-s)*100)}%"></i></div>`}
+        if(cur>=s){cls='r now';if(e-cur<=WARN_MIN){cls+=' warn';st=pulseStyle()}tag=`<em>Зараз · ще ${dur(e-cur)}</em>`;bar=`<div class="bar" aria-hidden="true"><i style="width:${Math.round((cur-s)/(e-s)*100)}%"></i></div>`}
         else if(!nextDone){nextDone=true;tag=`<em>Далі · через ${dur(s-cur)}</em>`}}
     }
     cls+=par(x.c);
-    h+=`<div class="${cls}" role="button" tabindex="0" data-e="${i}"><div class="t"><b>${x.n}</b><span>${a}</span><span>${b}</span></div><div class="s">${tag}<b>${x.c}</b><span>${roomTxt(x)}</span>${bar}</div><span class="k ${mode(x)===1?'':mode(x)===2?'m':'o'}">${mode(x)===1?'дист.':mode(x)===2?'зміш.':'очно'}</span></div>`;
+    h+=`<div class="${cls}" role="button" tabindex="0" data-e="${i}"${st}><div class="t"><b>${x.n}</b><span>${a}</span><span>${b}</span></div><div class="s">${tag}<b>${x.c}</b><span>${roomTxt(x)}</span>${bar}</div><span class="k ${mode(x)===1?'':mode(x)===2?'m':'o'}">${mode(x)===1?'дист.':mode(x)===2?'зміш.':'очно'}</span></div>`;
   });
   h+=`</div>`;
   if(!ls.length)h+=`<div class="note">Уроків немає. Додайте перший.</div>`;
@@ -208,10 +214,12 @@ function weekView(){
   for(let n=lo;n<=hi;n++){
     h+=`<div class="n">${n}</div>`;
     SCHEDULE.forEach((day,di)=>{const x=day.find(y=>y.n===n);
-      const on=x&&di===ti&&cur>=mins(BELLS[n][0])&&cur<mins(BELLS[n][1])?' cur':'';
+      const live=x&&di===ti&&cur>=mins(BELLS[n][0])&&cur<mins(BELLS[n][1]);
+      const warn=live&&mins(BELLS[n][1])-cur<=WARN_MIN;
+      const on=live?' cur'+(warn?' warn':''):'',st=warn?pulseStyle():'';
       if(!x){h+=`<div class="c e"></div>`;return}
       const cl=x.c.split(' ')[0],rest=x.c.slice(cl.length).trim();
-      h+=`<div class="c${x.d?' rem':mode(x)===2?' mix':''}${on}${par(x.c)}" aria-label="${x.c}, ${roomTxt(x)}">${mode(x)?'<svg class="ic" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>':''}<b>${cl}</b>${rest?`<i>${rest}</i>`:''}</div>`});
+      h+=`<div class="c${x.d?' rem':mode(x)===2?' mix':''}${on}${par(x.c)}" aria-label="${x.c}, ${roomTxt(x)}"${st}>${mode(x)?'<svg class="ic" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>':''}<b>${cl}</b>${rest?`<i>${rest}</i>`:''}</div>`});
   }
   h+=`</div><div class="legend"><span><b style="background:var(--rem2)"></b>дистанційно</span><span><b style="background:var(--card);border:1px solid var(--chip)"></b>очно</span><span><b style="background:linear-gradient(135deg,var(--card) 50%,var(--rem2) 50%);border:1px solid var(--chip)"></b>змішано</span><span><b style="background:var(--p7)"></b>7 клас</span><span><b style="background:var(--p8)"></b>8 клас</span><span><b style="background:var(--green)"></b>зараз</span></div>`+themeBox();
   view.innerHTML=h;
